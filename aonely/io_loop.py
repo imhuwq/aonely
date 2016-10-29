@@ -7,7 +7,6 @@ class IOLoop(object):
     selector = DefaultSelector()
 
     _instance_lock = threading.Lock()
-    _current = threading.local()
 
     @staticmethod
     def instance():

@@ -19,5 +19,3 @@ class Request(object):
         for header in headers:
             attr, value = header.split(':', 1)
             self.__setattr__(attr, value.strip())
-
-        print(self.__dict__)
