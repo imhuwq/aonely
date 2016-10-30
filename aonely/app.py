@@ -2,11 +2,17 @@ import threading
 from functools import wraps
 
 from aonely.server import Server
-from aonely.coroutine import coroutine
 
 
 class DuplicatedHandler(BaseException):
     pass
+
+
+def generator():
+    yield
+
+
+type_generator = type(generator())
 
 
 class RequestStack(object):
@@ -54,7 +60,9 @@ class Aonely(object):
         self.request_stack().push(req_obj)
         handler = self._handlers.get(req_obj.path, None)
         if handler:
-            response = yield from handler()
+            response = handler()
+            if type(response) == type_generator:
+                response = yield from response
         else:
             response = 'Not Found'
 
