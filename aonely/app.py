@@ -1,6 +1,7 @@
 import threading
 from functools import wraps
 
+from aonely.client import Client
 from aonely.server import Server
 
 
@@ -31,6 +32,7 @@ class Aonely(object):
 
     def __init__(self):
         self.server = None
+        self.client = None
         self._handlers = {}
 
     @staticmethod
@@ -56,9 +58,9 @@ class Aonely(object):
 
         return decorator
 
-    def dispatch_request(self, req_obj):
-        self.request_stack().push(req_obj)
-        handler = self._handlers.get(req_obj.path, None)
+    def dispatch_request(self, request_env):
+        self.request_stack().push(request_env)
+        handler = self._handlers.get(request_env.path, None)
         if handler:
             response = handler()
             if type(response) == type_generator:
@@ -74,7 +76,8 @@ class Aonely(object):
         return response
 
     def run(self, host='0.0.0.0', port=5000):
-        self.server = Server(host, port, self)
+        self.client = Client(self)
+        self.server = Server(self, host, port)
         self.server.start()
 
 

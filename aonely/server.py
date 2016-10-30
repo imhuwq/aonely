@@ -14,7 +14,7 @@ class Server(object):
     requests = {}
     responses = {}
 
-    def __init__(self, host='0.0.0.0', port=5000, app=None):
+    def __init__(self, app=None, host='0.0.0.0', port=5000):
         serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         serversocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         serversocket.bind((host, port))
