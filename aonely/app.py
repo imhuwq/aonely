@@ -1,3 +1,4 @@
+import types
 import threading
 from functools import wraps
 
@@ -18,6 +19,12 @@ class RequestStack(object):
 
     def pop(self):
         return self.data.pop() if self.data else None
+
+
+@coroutine
+def consume_generator(generator):
+    result = yield from generator()
+    return result
 
 
 class Aonely(object):
@@ -54,7 +61,10 @@ class Aonely(object):
         self.request_stack().push(req_obj)
         handler = self._handlers.get(req_obj.path, None)
         if handler:
-            response = yield from handler()
+            if isinstance(handler(), types.GeneratorType):
+                response = consume_generator(handler)
+            else:
+                response = handler()
         else:
             response = 'Not Found'
 

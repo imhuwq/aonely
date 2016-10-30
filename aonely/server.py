@@ -3,7 +3,6 @@ from selectors import EVENT_READ, EVENT_WRITE
 
 from aonely.io_loop import IOLoop
 from aonely.request import Request
-from aonely.coroutine import coroutine
 
 EOL1 = b'\n\n'
 EOL2 = b'\n\r\n'
@@ -28,7 +27,6 @@ class Server(object):
 
     def serve(self):
 
-        @coroutine
         def on_readable(key, mask):
             if key.fd == self.socket.fileno():
                 client, address = self.socket.accept()
@@ -41,7 +39,7 @@ class Server(object):
                 if EOL1 in self.requests[key.fd] or EOL2 in self.requests[key.fd]:
                     request_env = self.requests[key.fd]
                     request = Request(request_env)
-                    self.responses[key.fd] = yield from self.app.dispatch_request(request)
+                    self.responses[key.fd] = self.app.dispatch_request(request)
                     self.selector.unregister(key.fd)
                     self.selector.register(key.fd, EVENT_WRITE, on_writable)
 

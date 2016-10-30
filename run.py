@@ -1,5 +1,6 @@
 from aonely import Aonely
 from aonely.io_loop import IOLoop
+from aonely.coroutine import coroutine
 from aonely.app import request_stack
 from aonely.client import Client
 
@@ -13,11 +14,9 @@ def index():
 
 
 @app.route('/get')
+@coroutine
 def get():
-    request = request_stack.pop()
-    response = request.args.get('page', 'no page specified')
-    if response == 'baidu':
-        response = yield from client.get('http://www.baidu.com')
+    response = yield from client.get('http://www.baidu.com')
     return response
 
 
