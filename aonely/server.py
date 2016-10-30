@@ -18,7 +18,7 @@ class Server(object):
         serversocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         serversocket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         serversocket.bind((host, port))
-        serversocket.listen(1)
+        serversocket.listen()
         serversocket.setblocking(0)
 
         self.socket = serversocket
@@ -28,31 +28,32 @@ class Server(object):
 
     def serve(self):
 
+        def on_accessible(key, mask):
+            client, address = self.socket.accept()
+            client.setblocking(0)
+            self.selector.register(client.fileno(), EVENT_READ, on_readable)
+            self.clients[client.fileno()] = client
+            self.requests[client.fileno()] = b''
+
         @coroutine
         def on_readable(key, mask):
-            if key.fd == self.socket.fileno():
-                client, address = self.socket.accept()
-                client.setblocking(0)
-                self.selector.register(client.fileno(), EVENT_READ, on_readable)
-                self.clients[client.fileno()] = client
-                self.requests[client.fileno()] = b''
-            else:
-                self.requests[key.fd] += self.clients[key.fd].recv(4096)
-                if EOL1 in self.requests[key.fd] or EOL2 in self.requests[key.fd]:
-                    request_env = self.requests[key.fd]
-                    request = Request(request_env)
-                    self.responses[key.fd] = yield from self.app.dispatch_request(request)
-                    self.selector.unregister(key.fd)
-                    self.selector.register(key.fd, EVENT_WRITE, on_writable)
+            self.requests[key.fd] += self.clients[key.fd].recv(4096)
+            if EOL1 in self.requests[key.fd] or EOL2 in self.requests[key.fd]:
+                request_env = self.requests[key.fd]
+                request = Request(request_env)
+                self.responses[key.fd] = yield from self.app.dispatch_request(request)
+                self.selector.modify(key.fd, EVENT_WRITE, on_writable)
 
         def on_writable(key, mask):
             byteswritten = self.clients[key.fd].send(self.responses[key.fd])
             self.responses[key.fd] = self.responses[key.fd][byteswritten:]
+            print('sending to %s %s bytes data' % (key.fd, byteswritten))
             if len(self.responses[key.fd]) == 0:
                 self.selector.unregister(key.fd)
-                self.clients[key.fd].shutdown(socket.SHUT_RDWR)
+                self.clients[key.fd].close()
+                del self.clients[key.fd]
 
-        self.selector.register(self.socket.fileno(), EVENT_READ, on_readable)
+        self.selector.register(self.socket.fileno(), EVENT_READ, on_accessible)
 
     def start(self):
         self.serve()
