@@ -17,10 +17,10 @@ class Task(object):
             return
         next_future.add_callback(self.step)
 
-    @classmethod
-    def coroutine(cls, fn):
-        @wraps(fn)
-        def wrapper(*args, **kwargs):
-            return Task(fn(*args, **kwargs))
 
-        return wrapper
+def coroutine(fn):
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        return Task(fn(*args, **kwargs))
+
+    return wrapper

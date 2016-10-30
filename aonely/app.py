@@ -2,6 +2,7 @@ import threading
 from functools import wraps
 
 from aonely.server import Server
+from aonely.coroutine import coroutine
 
 
 class DuplicatedHandler(BaseException):
@@ -53,10 +54,16 @@ class Aonely(object):
         self.request_stack().push(req_obj)
         handler = self._handlers.get(req_obj.path, None)
         if handler:
-            response = handler()
+            response = yield from handler()
         else:
             response = 'Not Found'
-        return response.encode()
+
+        try:
+            response = response.encode()
+        except AttributeError:
+            pass
+
+        return response
 
     def run(self, host='0.0.0.0', port=5000):
         self.server = Server(host, port, self)
