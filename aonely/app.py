@@ -3,6 +3,7 @@ from functools import wraps
 
 from aonely.client import Client
 from aonely.server import Server
+from aonely.coroutine import TYPE_GENERATOR
 
 
 class DuplicatedHandler(BaseException):
@@ -63,7 +64,7 @@ class Aonely(object):
         handler = self._handlers.get(request_env.path, None)
         if handler:
             response = handler()
-            if type(response) == type_generator:
+            if type(response) == TYPE_GENERATOR:
                 response = yield from response
         else:
             response = 'Not Found'

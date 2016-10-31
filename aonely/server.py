@@ -2,8 +2,8 @@ import socket
 from selectors import EVENT_READ, EVENT_WRITE
 
 from aonely.io_loop import IOLoop
+from aonely.coroutine import asyncio
 from aonely.request import Request
-from aonely.coroutine import coroutine
 
 EOL1 = b'\n\n'
 EOL2 = b'\n\r\n'
@@ -35,7 +35,7 @@ class Server(object):
             self.clients[client.fileno()] = client
             self.requests[client.fileno()] = b''
 
-        @coroutine
+        @asyncio
         def on_readable(key, mask):
             self.requests[key.fd] += self.clients[key.fd].recv(4096)
             if EOL1 in self.requests[key.fd] or EOL2 in self.requests[key.fd]:
